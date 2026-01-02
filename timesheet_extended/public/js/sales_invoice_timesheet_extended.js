@@ -25,17 +25,13 @@ timesheet_extended.sales_invoice.add_timesheet_data = function(frm, kwargs) {
 		freeze: true,
 		callback: function(r) {
 			if (!r.exc && r.message && r.message.length > 0) {
+
 				const timesheets = r.message;
-				
-				// Group timesheets by employee
 				const groupedByEmployee = timesheet_extended.sales_invoice.group_timesheets_by_employee(timesheets);
-				
-				// Create item lines per employee if item_code is provided
 				if (kwargs.item_code) {
 					timesheet_extended.sales_invoice.add_timesheet_items_by_employee(frm, kwargs.item_code, groupedByEmployee);
 				}
-				
-				// Add timesheet details to child table
+			
 				timesheet_extended.sales_invoice.set_timesheet_data(frm, timesheets);
 			} else {
 				frappe.show_alert({
@@ -72,8 +68,6 @@ timesheet_extended.sales_invoice.group_timesheets_by_employee = function(timeshe
 		grouped[employee].total_billing_hours += flt(timesheet.billing_hours || 0);
 		grouped[employee].total_billing_amount += flt(timesheet.billing_amount || 0);
 		
-		// Calculate weighted average rate
-		// If billing_rate is available, use it; otherwise calculate from billing_amount/billing_hours
 		let rate = 0;
 		if (timesheet.billing_rate && timesheet.billing_rate > 0) {
 			rate = flt(timesheet.billing_rate);
@@ -87,14 +81,11 @@ timesheet_extended.sales_invoice.group_timesheets_by_employee = function(timeshe
 		}
 	});
 	
-	// Calculate weighted average rate for each employee
 	Object.keys(grouped).forEach(function(employee) {
 		const group = grouped[employee];
 		if (group.weighted_hours_sum > 0) {
-			// Use weighted average rate
 			group.billing_rate = group.weighted_rate_sum / group.weighted_hours_sum;
 		} else if (group.total_billing_hours > 0 && group.total_billing_amount > 0) {
-			// Fallback: calculate from total amount / total hours
 			group.billing_rate = group.total_billing_amount / group.total_billing_hours;
 		}
 	});
@@ -118,46 +109,35 @@ timesheet_extended.sales_invoice.add_timesheet_items_by_employee = function(frm,
 		index++;
 		
 		if (group.total_billing_hours > 0 && group.billing_rate > 0) {
-			// Add child row
 			const row = frm.add_child("items");
 			const rowName = row.name;
 			const rowDoctype = row.doctype;
 			const customRate = group.billing_rate;
 			const description = `${item_code} - ${group.employee_name || employee}`;
 			
-			// Refresh field to ensure row is attached to grid
 			frm.refresh_field("items");
 			
-			// Wait for grid to refresh and row to be attached
 			function checkRowReady() {
-				// Verify row exists and is attached to form
 				const currentRow = frappe.get_doc(rowDoctype, rowName);
 				if (!currentRow || !currentRow.parent || currentRow.parent !== frm.docname) {
-					// Row not ready yet, try again
 					setTimeout(checkRowReady, 100);
 					return;
 				}
 				
-				// Mark this row as timesheet-extended with custom rate
 				currentRow._timesheet_extended_rate = customRate;
 				
-				// Set description first (doesn't trigger formatters)
 				currentRow.description = description;
 				
-				// Set qty
 				frappe.model.set_value(rowDoctype, rowName, "qty", group.total_billing_hours)
 					.then(function() {
-						// Set item_code - this will trigger item details fetch
 						return frappe.model.set_value(rowDoctype, rowName, "item_code", item_code);
 					})
 					.then(function() {
-						// Immediately set rate before item details can overwrite it
 						frappe.model.set_value(rowDoctype, rowName, {
 							rate: customRate,
 							price_list_rate: customRate
 						});
 						
-						// Set rate again after item details load (multiple attempts to ensure it sticks)
 						setTimeout(function() {
 							const finalRow = frappe.get_doc(rowDoctype, rowName);
 							if (finalRow && finalRow._timesheet_extended_rate) {
@@ -166,7 +146,6 @@ timesheet_extended.sales_invoice.add_timesheet_items_by_employee = function(frm,
 									price_list_rate: finalRow._timesheet_extended_rate
 								});
 								
-								// One more time after pricing rules might have run
 								setTimeout(function() {
 									const finalRow2 = frappe.get_doc(rowDoctype, rowName);
 									if (finalRow2 && finalRow2._timesheet_extended_rate) {
@@ -193,22 +172,18 @@ timesheet_extended.sales_invoice.add_timesheet_items_by_employee = function(frm,
 					});
 			}
 			
-			// Start checking for row readiness
 			setTimeout(checkRowReady, 200);
 		} else {
 			addNextItem();
 		}
 	}
 	
-	// Start adding items
 	addNextItem();
 };
 
-// Set timesheet data (same as original but handles currency conversion)
 timesheet_extended.sales_invoice.set_timesheet_data = function(frm, timesheets) {
 	frm.clear_table("timesheets");
 	
-	// Process timesheets sequentially to handle async exchange rate calls
 	let processed = 0;
 	const total = timesheets.length;
 	
@@ -263,7 +238,6 @@ timesheet_extended.sales_invoice.get_exchange_rate = function(frm, from_currency
 			},
 			callback: function(r) {
 				if (r.message) {
-					// cache exchange rates
 					frm.exchange_rates = frm.exchange_rates || {};
 					frm.exchange_rates[from_currency] = frm.exchange_rates[from_currency] || {};
 					frm.exchange_rates[from_currency][to_currency] = r.message;
@@ -274,7 +248,6 @@ timesheet_extended.sales_invoice.get_exchange_rate = function(frm, from_currency
 	});
 };
 
-// Append time log to timesheets child table
 timesheet_extended.sales_invoice.append_time_log = function(frm, time_log, exchange_rate) {
 	const row = frm.add_child("timesheets");
 	row.activity_type = time_log.activity_type;
@@ -288,19 +261,15 @@ timesheet_extended.sales_invoice.append_time_log = function(frm, time_log, excha
 	row.project_name = time_log.project_name;
 };
 
-// Override item_code handler to preserve timesheet-extended rate
 frappe.ui.form.on("Sales Invoice Item", {
 	item_code: function(frm, cdt, cdn) {
 		const row = frappe.get_doc(cdt, cdn);
-		// If this row has a timesheet-extended rate, restore it after item details load
 		if (row._timesheet_extended_rate && row._timesheet_extended_rate > 0) {
-			// Set immediately
 			frappe.model.set_value(cdt, cdn, {
 				rate: row._timesheet_extended_rate,
 				price_list_rate: row._timesheet_extended_rate
 			});
 			
-			// Set again after a delay to override any pricing rules
 			setTimeout(function() {
 				const currentRow = frappe.get_doc(cdt, cdn);
 				if (currentRow && currentRow._timesheet_extended_rate) {
@@ -311,7 +280,6 @@ frappe.ui.form.on("Sales Invoice Item", {
 				}
 			}, 200);
 			
-			// One more time after pricing rules might have run
 			setTimeout(function() {
 				const currentRow = frappe.get_doc(cdt, cdn);
 				if (currentRow && currentRow._timesheet_extended_rate) {
@@ -324,14 +292,11 @@ frappe.ui.form.on("Sales Invoice Item", {
 		}
 	},
 	
-	// Also override rate field to prevent changes
 	rate: function(frm, cdt, cdn) {
 		const row = frappe.get_doc(cdt, cdn);
-		// If this row has a timesheet-extended rate and current rate doesn't match, restore it
 		if (row._timesheet_extended_rate && row._timesheet_extended_rate > 0) {
 			const currentRate = flt(row.rate);
 			const expectedRate = flt(row._timesheet_extended_rate);
-			// Allow small differences due to rounding, but if significantly different, restore
 			if (Math.abs(currentRate - expectedRate) > 0.01) {
 				setTimeout(function() {
 					const currentRow = frappe.get_doc(cdt, cdn);
@@ -350,14 +315,10 @@ frappe.ui.form.on("Sales Invoice Item", {
 // Override the refresh function to replace the timesheet button with our custom one
 frappe.ui.form.on("Sales Invoice", {
 	refresh: function(frm) {
-		// Only override if we're in draft status and not a return
 		if (frm.doc.docstatus === 0 && !frm.doc.is_return) {
-			// Wait a bit to ensure ERPNext's refresh has run, then replace the button
 			setTimeout(function() {
-				// Remove existing timesheet button if it exists
 				frm.page.remove_inner_button(__("Timesheet"), __("Get Items From"));
 				
-				// Add our custom button
 				frm.add_custom_button(
 					__("Timesheet"),
 					function () {
