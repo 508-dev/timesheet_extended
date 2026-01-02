@@ -6,10 +6,21 @@ An app that modifies the current flow of createing slaes invoice from timehseet.
 
 You can install this app using the [bench](https://github.com/frappe/bench) CLI:
 
-```bash
-cd $PATH_TO_YOUR_BENCH
-bench get-app $URL_OF_THIS_REPO --branch develop
-bench install-app timesheet_extended
+Get the app
+```
+bench get-app https://github.com/lijsamuael/timesheet_extended --branch develop
+```
+Install into your site
+```
+bench --site [site name] install-app timesheet_extended
+```
+Clear the cache to see the effect
+```
+bench clear cache
+```
+Restart the bench
+```
+bench restart
 ```
 
 ### Contributing
