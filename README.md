@@ -16,7 +16,7 @@ bench --site [site name] install-app timesheet_extended
 ```
 Clear the cache to see the effect
 ```
-bench clear cache
+bench clear-cache
 ```
 Restart the bench
 ```
