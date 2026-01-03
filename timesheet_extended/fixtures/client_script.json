@@ -1,0 +1,13 @@
+[
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Project",
+  "enabled": 1,
+  "modified": "2026-01-03 22:53:35.356255",
+  "module": "Timesheet Extended",
+  "name": "Project Dashboard",
+  "script": "frappe.ui.form.on('Project', {\n\trefresh(frm) {\n\t\tfrm.trigger(\"render_financial_charts\");\n\t},\n\n\trender_financial_charts(frm) {\n\t\tconst sales_amount = frm.doc.total_billed_amount || 0;\n\t\tconst purchase_amount = frm.doc.total_purchase_cost || 0;\n\n\t\tfrm.dashboard.clear_headline();\n\n\t\tfrm.dashboard.set_headline(`\n\t\t\t<div style=\"\n\t\t\t\tdisplay:flex;\n\t\t\t\tflex-wrap:wrap;\n\t\t\t\tgap: 5px;\n\t\t\t\tmin-height:300px;\n\t\t\t\tbackground: transparent;\n\t\t\t\tborder-radius:12px;\n\t\t\t\tfont-family: var(--font-family);\n\t\t\t\">\n\n\t\t\t\t<div style=\"\n\t\t\t\t\tflex:1;\n\t\t\t\t\tmin-width:300px;\n\t\t\t\t\tbackground: var(--card-bg);\n\t\t\t\t\tborder-radius:10px;\n\t\t\t\t\tpadding:16px;\n\t\t\t\t\tbox-shadow: var(--card-shadow);\n\t\t\t\t\">\n\t\t\t\t\t<div id=\"project_sales_purchase_bar\" style=\"height:220px;\"></div>\n\t\t\t\t</div>\n\n\t\t\t\t<div style=\"\n\t\t\t\t\tflex:1;\n\t\t\t\t\tmin-width:300px;\n\t\t\t\t\tbackground: var(--card-bg);\n\t\t\t\t\tborder-radius:10px;\n\t\t\t\t\tpadding:16px;\n\t\t\t\t\tbox-shadow: var(--card-shadow);\n\t\t\t\t\">\n\t\t\t\t\t<div id=\"project_sales_purchase_pie\" style=\"height:220px;\"></div>\n\t\t\t\t</div>\n\n\t\t\t</div>\n\t\t`);\n\n\t\tsetTimeout(() => {\n\t\t\tconst bar_el = document.getElementById(\"project_sales_purchase_bar\");\n\t\t\tconst pie_el = document.getElementById(\"project_sales_purchase_pie\");\n\n\t\t\tif (!bar_el || !pie_el) return;\n\n\t\t\tconst data = {\n\t\t\t\tlabels: [\"Sales Invoice\", \"Purchase Invoice\"],\n\t\t\t\tdatasets: [\n\t\t\t\t\t{\n\t\t\t\t\t\tname: \"Amount\",\n\t\t\t\t\t\tvalues: [sales_amount, purchase_amount]\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t};\n\n\t\t\tnew frappe.Chart(bar_el, {\n\t\t\t\ttitle: \"Sales vs Purchases\",\n\t\t\t\tdata,\n\t\t\t\ttype: \"bar\",\n\t\t\t\theight: 220,\n\t\t\t\tcolors: [\"#21ba45\", \"#db2828\"]\n\t\t\t});\n\n\t\t\tnew frappe.Chart(pie_el, {\n\t\t\t\ttitle: \"Financial Distribution\",\n\t\t\t\tdata,\n\t\t\t\ttype: \"pie\",\n\t\t\t\theight: 220,\n\t\t\t\tcolors: [\"#21ba45\", \"#db2828\"]\n\t\t\t});\n\t\t}, 300);\n\t}\n});\n",
+  "view": "Form"
+ }
+]

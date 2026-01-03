@@ -250,3 +250,13 @@ doctype_js = {"Sales Invoice" : "public/js/sales_invoice_timesheet_extended.js"}
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
 
+
+fixtures = [
+	{
+		"dt": "Client Script",
+		"filters": {
+			"module": "Timesheet Extended",
+		},
+	},
+]
+
