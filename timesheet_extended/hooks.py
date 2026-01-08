@@ -43,7 +43,11 @@ app_license = "mit"
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-doctype_js = {"Sales Invoice" : "public/js/sales_invoice_timesheet_extended.js"}
+doctype_js = {
+	"Sales Invoice" : "public/js/sales_invoice_timesheet_extended.js",
+	"Purchase Invoice" : "public/js/purchase_invoice_timesheet_extended.js",
+	"Timesheet" : "public/js/timesheet_extended.js"
+}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -132,13 +136,12 @@ doctype_js = {"Sales Invoice" : "public/js/sales_invoice_timesheet_extended.js"}
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+	"Purchase Invoice": {
+		"on_submit": "timesheet_extended.timesheet_extended.purchase_invoice_extended.update_timesheet_from_purchase_invoice",
+		"on_cancel": "timesheet_extended.timesheet_extended.purchase_invoice_extended.unlink_timesheet_from_purchase_invoice",
+	}
+}
 
 # Scheduled Tasks
 # ---------------
@@ -184,9 +187,9 @@ doctype_js = {"Sales Invoice" : "public/js/sales_invoice_timesheet_extended.js"}
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
 # along with any modifications made in other Frappe apps
-# override_doctype_dashboards = {
-# 	"Task": "timesheet_extended.task.get_dashboard_data"
-# }
+override_doctype_dashboards = {
+	"Timesheet": "timesheet_extended.timesheet_extended.timesheet_dashboard.get_data"
+}
 
 # exempt linked doctypes from being automatically cancelled
 #

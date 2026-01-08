@@ -1,0 +1,41 @@
+[
+	{
+		"doctype": "Custom Field",
+		"name": "Timesheet-purchase_invoice",
+		"dt": "Timesheet",
+		"fieldname": "purchase_invoice",
+		"fieldtype": "Link",
+		"label": "Purchase Invoice",
+		"options": "Purchase Invoice",
+		"insert_after": "sales_invoice",
+		"no_copy": 1,
+		"print_hide": 1,
+		"read_only": 1
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Timesheet-purchase_invoice_status",
+		"dt": "Timesheet",
+		"fieldname": "purchase_invoice_status",
+		"fieldtype": "Select",
+		"label": "Purchase Invoice Status",
+		"options": "\nNot Created\nCreated\nBilled",
+		"insert_after": "purchase_invoice",
+		"default": "Not Created",
+		"read_only": 1,
+		"print_hide": 1
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Purchase Invoice-timesheet",
+		"dt": "Purchase Invoice",
+		"fieldname": "timesheet",
+		"fieldtype": "Link",
+		"label": "Timesheet",
+		"options": "Timesheet",
+		"insert_after": "supplier",
+		"no_copy": 1,
+		"print_hide": 1,
+		"read_only": 1
+	}
+]
