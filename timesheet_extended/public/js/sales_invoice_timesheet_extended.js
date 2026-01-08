@@ -25,8 +25,23 @@ timesheet_extended.sales_invoice.add_timesheet_data = function(frm, kwargs) {
 		freeze: true,
 		callback: function(r) {
 			if (!r.exc && r.message && r.message.length > 0) {
-
 				const timesheets = r.message;
+				
+				// Get project from timesheets (priority: kwargs.project > timesheet.project > frm.doc.project)
+				let projectToSet = kwargs.project || null;
+				if (!projectToSet && timesheets.length > 0) {
+					// Get project from first timesheet (all should be from same project)
+					projectToSet = timesheets[0].project || null;
+				}
+				
+				// Set project on Sales Invoice if we have a value
+				if (projectToSet && projectToSet !== frm.doc.project) {
+					frm.set_value("project", projectToSet);
+				}
+				
+				// Store project for use in item rows
+				timesheet_extended.sales_invoice._currentProject = projectToSet || frm.doc.project;
+				
 				const groupedByEmployee = timesheet_extended.sales_invoice.group_timesheets_by_employee(timesheets);
 				if (kwargs.item_code) {
 					timesheet_extended.sales_invoice.add_timesheet_items_by_employee(frm, kwargs.item_code, groupedByEmployee);
@@ -128,7 +143,17 @@ timesheet_extended.sales_invoice.add_timesheet_items_by_employee = function(frm,
 				
 				currentRow.description = description;
 				
+				// Get project to set on item row
+				const projectToSet = timesheet_extended.sales_invoice._currentProject || frm.doc.project;
+				
 				frappe.model.set_value(rowDoctype, rowName, "qty", group.total_billing_hours)
+					.then(function() {
+						// Set project on item row if available
+						if (projectToSet) {
+							return frappe.model.set_value(rowDoctype, rowName, "project", projectToSet);
+						}
+						return Promise.resolve();
+					})
 					.then(function() {
 						return frappe.model.set_value(rowDoctype, rowName, "item_code", item_code);
 					})

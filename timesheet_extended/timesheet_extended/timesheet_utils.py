@@ -31,6 +31,7 @@ def get_projectwise_timesheet_data_with_employee(project=None, parent=None, from
 			tsd.activity_type as activity_type,
 			tsd.description as description,
 			ts.currency as currency,
+			tsd.project as project,
 			tsd.project_name as project_name,
 			ts.employee as employee,
 			ts.employee_name as employee_name
