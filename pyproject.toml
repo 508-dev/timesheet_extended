@@ -4,7 +4,7 @@ authors = [
     { name = "Samuael Ketema", email = "lijsamuael@gmail.com"}
 ]
 description = "An app that modifies the current flow of createing slaes invoice from timehseet. It allows more control and configuration."
-requires-python = ">=3.14"
+requires-python = ">=3.11"
 readme = "README.md"
 dynamic = ["version"]
 dependencies = [
