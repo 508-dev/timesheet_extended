@@ -43,15 +43,28 @@ timesheet_extended.purchase_invoice.add_timesheet_data = function(frm, kwargs) {
 				// Store project for use in item rows
 				timesheet_extended.purchase_invoice._currentProject = projectToSet || frm.doc.project;
 				
+				// Store timesheet names for linking
+				const timesheet_names = timesheets.map(function(ts) {
+					return ts.time_sheet;
+				}).filter(function(name, index, self) {
+					return self.indexOf(name) === index; // Get unique values
+				});
+				timesheet_extended.purchase_invoice._currentTimesheets = timesheet_names;
+				
 				const groupedByEmployee = timesheet_extended.purchase_invoice.group_timesheets_by_employee(timesheets);
 				if (kwargs.item_code) {
 					timesheet_extended.purchase_invoice.add_timesheet_items_by_employee(frm, kwargs.item_code, groupedByEmployee);
 				}
 			
 				timesheet_extended.purchase_invoice.set_timesheet_data(frm, timesheets);
+				
+				// Link timesheets to Purchase Invoice and update status
+				timesheet_extended.purchase_invoice.link_timesheets_to_purchase_invoice(frm, timesheet_names);
 			} else {
-				frappe.show_alert({
-					message: __("No timesheets found for the selected criteria"),
+				// Show message when no matching timesheets found
+				frappe.msgprint({
+					title: __("No Timesheets Found"),
+					message: __("There are no matching timesheets or all timesheets have already been created for purchase invoices. Please select a different date range or project."),
 					indicator: "orange"
 				});
 			}
@@ -218,6 +231,36 @@ timesheet_extended.purchase_invoice.set_timesheet_data = function(frm, timesheet
 	frm.refresh_field("items");
 };
 
+// Link timesheets to Purchase Invoice and update their status
+timesheet_extended.purchase_invoice.link_timesheets_to_purchase_invoice = function(frm, timesheet_names) {
+	if (!timesheet_names || timesheet_names.length === 0) {
+		return;
+	}
+	
+	// Only link if Purchase Invoice is saved (has a name)
+	if (!frm.doc.name || frm.doc.__islocal) {
+		// Purchase Invoice not saved yet, store for linking after save
+		timesheet_extended.purchase_invoice._pendingTimesheets = timesheet_names;
+	} else {
+		// Purchase Invoice already has a name, link immediately
+		frappe.call({
+			method: "timesheet_extended.timesheet_extended.timesheet_utils.link_timesheets_to_purchase_invoice",
+			args: {
+				purchase_invoice_name: frm.doc.name,
+				timesheet_names: timesheet_names
+			},
+			callback: function(r) {
+				if (!r.exc) {
+					frappe.show_alert({
+						message: __("Linked {0} timesheet(s) to Purchase Invoice", [r.message.linked_count || timesheet_names.length]),
+						indicator: "green"
+					});
+				}
+			}
+		});
+	}
+};
+
 // Override item_code handler to preserve timesheet-extended rate
 frappe.ui.form.on("Purchase Invoice Item", {
 	item_code: function(frm, cdt, cdn) {
@@ -272,6 +315,35 @@ frappe.ui.form.on("Purchase Invoice Item", {
 
 // Override the refresh function to add timesheet button
 frappe.ui.form.on("Purchase Invoice", {
+	onload: function(frm) {
+		// Initialize timesheet tracking
+		timesheet_extended.purchase_invoice._pendingTimesheets = null;
+	},
+	
+	after_save: function(frm) {
+		// Link pending timesheets after Purchase Invoice is saved
+		if (timesheet_extended.purchase_invoice._pendingTimesheets && frm.doc.name) {
+			const timesheet_names = timesheet_extended.purchase_invoice._pendingTimesheets;
+			timesheet_extended.purchase_invoice._pendingTimesheets = null;
+			
+			frappe.call({
+				method: "timesheet_extended.timesheet_extended.timesheet_utils.link_timesheets_to_purchase_invoice",
+				args: {
+					purchase_invoice_name: frm.doc.name,
+					timesheet_names: timesheet_names
+				},
+				callback: function(r) {
+					if (!r.exc) {
+						frappe.show_alert({
+							message: __("Linked {0} timesheet(s) to Purchase Invoice", [r.message.linked_count || timesheet_names.length]),
+							indicator: "green"
+						});
+					}
+				}
+			});
+		}
+	},
+	
 	refresh: function(frm) {
 		if (frm.doc.docstatus === 0 && !frm.doc.is_return) {
 			setTimeout(function() {
