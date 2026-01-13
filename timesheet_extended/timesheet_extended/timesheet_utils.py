@@ -57,6 +57,7 @@ def get_projectwise_timesheet_data_for_purchase_invoice(project=None, parent=Non
 	"""
 	Extended version for Purchase Invoice that includes employee information
 	and costing_rate for grouping by employee/engineer.
+	Only fetches timesheets with status "Not Created" (not "Created" or "Billed").
 	"""
 	condition = ""
 	if project:
@@ -88,6 +89,7 @@ def get_projectwise_timesheet_data_for_purchase_invoice(project=None, parent=Non
 		WHERE
 			tsd.parenttype = 'Timesheet'
 			AND tsd.docstatus = 1
+			AND (ts.purchase_invoice_status IS NULL OR ts.purchase_invoice_status = '' OR ts.purchase_invoice_status = 'Not Created')
 			{condition}
 		ORDER BY ts.employee ASC, tsd.from_time ASC
 	"""
@@ -95,6 +97,36 @@ def get_projectwise_timesheet_data_for_purchase_invoice(project=None, parent=Non
 	filters = {"project": project, "parent": parent, "from_time": from_time, "to_time": to_time}
 
 	return frappe.db.sql(query, filters, as_dict=1)
+
+
+@frappe.whitelist()
+def link_timesheets_to_purchase_invoice(purchase_invoice_name, timesheet_names):
+	"""
+	Link multiple timesheets to a Purchase Invoice and update their status to "Created".
+	"""
+	if not purchase_invoice_name or not timesheet_names:
+		return
+	
+	if isinstance(timesheet_names, str):
+		timesheet_names = frappe.parse_json(timesheet_names)
+	
+	if not isinstance(timesheet_names, list):
+		timesheet_names = [timesheet_names]
+	
+	# Get unique timesheet names (in case of duplicates)
+	unique_timesheet_names = list(set(timesheet_names))
+	
+	for timesheet_name in unique_timesheet_names:
+		try:
+			timesheet = frappe.get_doc("Timesheet", timesheet_name)
+			timesheet.purchase_invoice = purchase_invoice_name
+			timesheet.purchase_invoice_status = "Created"
+			timesheet.flags.ignore_validate_update_after_submit = True
+			timesheet.save(ignore_permissions=True)
+		except Exception as e:
+			frappe.log_error(f"Error linking timesheet {timesheet_name} to purchase invoice {purchase_invoice_name}: {str(e)}")
+	
+	return {"status": "success", "linked_count": len(unique_timesheet_names)}
 
 
 @frappe.whitelist()
