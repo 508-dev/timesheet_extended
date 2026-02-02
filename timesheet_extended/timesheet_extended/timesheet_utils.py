@@ -137,9 +137,7 @@ def link_timesheets_to_purchase_invoice(purchase_invoice_name, timesheet_names):
             timesheet.save(ignore_permissions=True)
         except Exception as e:
             frappe.log_error(
-                f"Error linking timesheet {timesheet_name} to purchase invoice {purchase_invoice_name}: {
-                    str(e)
-                }"
+                f"Error linking timesheet {timesheet_name} to purchase invoice {purchase_invoice_name}: {str(e)}"
             )
 
     return {"status": "success", "linked_count": len(unique_timesheet_names)}
