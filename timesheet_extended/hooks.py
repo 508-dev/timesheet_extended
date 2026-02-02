@@ -256,6 +256,12 @@ override_doctype_dashboards = {
 
 fixtures = [
 	{
+		"dt": "Custom Field",
+		"filters": {
+			"module": "Timesheet Extended",
+		},
+	},
+	{
 		"dt": "Client Script",
 		"filters": {
 			"module": "Timesheet Extended",

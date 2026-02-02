@@ -360,6 +360,14 @@ frappe.ui.form.on("Purchase Invoice", {
 									reqd: 1,
 								},
 								{
+									label: __("Supplier"),
+									fieldname: "supplier",
+									fieldtype: "Link",
+									options: "Supplier",
+									default: frm.doc.supplier,
+									description: __("Filter timesheets by employees linked to this supplier"),
+								},
+								{
 									label: __("Item Code"),
 									fieldname: "item_code",
 									fieldtype: "Link",
@@ -405,6 +413,7 @@ frappe.ui.form.on("Purchase Invoice", {
 									to_time: data.to_time,
 									project: data.project,
 									item_code: data.item_code,
+									supplier: data.supplier,
 								});
 								d.hide();
 							},

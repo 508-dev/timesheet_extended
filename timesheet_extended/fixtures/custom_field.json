@@ -37,5 +37,16 @@
 		"no_copy": 1,
 		"print_hide": 1,
 		"read_only": 1
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Employee-supplier",
+		"dt": "Employee",
+		"fieldname": "supplier",
+		"fieldtype": "Link",
+		"label": "Supplier",
+		"options": "Supplier",
+		"insert_after": "company",
+		"description": "Link this employee to a supplier for purchase invoice filtering"
 	}
 ]
