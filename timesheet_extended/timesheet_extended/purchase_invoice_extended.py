@@ -44,12 +44,10 @@ def update_timesheet_from_purchase_invoice(doc, method=None):
                 timesheet.save(ignore_permissions=True)
             except Exception as e:
                 frappe.log_error(
-                    f"Error updating timesheet {
-                        timesheet_name} from purchase invoice {doc.name}: {str(e)}"
+                    f"Error updating timesheet {timesheet_name} from purchase invoice {doc.name}: {str(e)}"
                 )
     except Exception as e:
-        frappe.log_error(f"Error fetching timesheets for purchase invoice {
-                         doc.name}: {str(e)}")
+        frappe.log_error(f"Error fetching timesheets for purchase invoice {doc.name}: {str(e)}")
 
 
 def unlink_timesheet_from_purchase_invoice(doc, method=None):
@@ -87,9 +85,7 @@ def unlink_timesheet_from_purchase_invoice(doc, method=None):
                 timesheet.save(ignore_permissions=True)
             except Exception as e:
                 frappe.log_error(
-                    f"Error unlinking timesheet {
-                        timesheet_name} from purchase invoice {doc.name}: {str(e)}"
+                    f"Error unlinking timesheet {timesheet_name} from purchase invoice {doc.name}: {str(e)}"
                 )
     except Exception as e:
-        frappe.log_error(f"Error fetching timesheets for purchase invoice {
-                         doc.name}: {str(e)}")
+        frappe.log_error(f"Error fetching timesheets for purchase invoice {doc.name}: {str(e)}")
