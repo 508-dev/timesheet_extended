@@ -46,7 +46,10 @@ app_license = "mit"
 doctype_js = {
 	"Sales Invoice" : "public/js/sales_invoice_timesheet_extended.js",
 	"Purchase Invoice" : "public/js/purchase_invoice_timesheet_extended.js",
-	"Timesheet" : "public/js/timesheet_extended.js"
+	"Timesheet" : [
+		"public/js/timesheet_extended.js",
+		"public/js/timesheet_csv_import.js",
+	],
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
